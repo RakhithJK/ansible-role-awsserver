@@ -22,7 +22,6 @@
     group: "{{ security_group }}"
     region: "{{ region }}"
     instance_type: "{{ instance_type }}"
-    instance_profile_name: "{{ iam_role }}"
     vpc_subnet_id: "{{ vpc_subnet_id }}"
     assign_public_ip: yes
     image: "{{ _ami.results[0].ami_id }}"
