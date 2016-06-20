@@ -84,19 +84,3 @@
       to_port: all
       cidr_ip: 0.0.0.0/0
 
-- name: Create iam role
-  iam:
-    iam_type: role
-    name: "{{ iam_role }}"
-    state: present
-
-- name: Create policy
-  iam_policy:
-    iam_type: role
-    iam_name: "{{ iam_role }}"
-    policy_name: "{{ iam_policy }}"
-    policy_document: web_policy.json
-    state: present
-
-- name: Wait 15 seconds for iam policy to be propagated
-  pause: seconds=15
