@@ -1,0 +1,102 @@
+- name: Create route53 (DNS) zone
+  route53_zone:
+      state: present
+      zone: "{{ dns_zone }}"
+      #vpc_id: "{{ vpc_id }}"
+      #vpc_region: "{{ region }}"
+  register: _route53
+
+- name: Find image
+  ec2_ami_find:
+    name: "*/ubuntu-trusty-14.04-amd64-server-*"
+    region: "{{ region }}"
+    virtualization_type: hvm
+    sort: name
+    sort_order: descending
+    sort_end: 1
+  register: _ami
+
+- name: Provision EC2 instance
+  ec2:
+    keypair: "{{ key_pair_name }}"
+    group: "{{ security_group }}"
+    region: "{{ region }}"
+    instance_type: "{{ instance_type }}"
+    instance_profile_name: "{{ iam_role }}"
+    vpc_subnet_id: "{{ vpc_subnet_id }}"
+    assign_public_ip: yes
+    image: "{{ _ami.results[0].ami_id }}"
+    wait: True
+    exact_count: 1
+    count_tag:
+      Name: "{{ tag_name }}"
+    instance_tags:
+      Name: "{{ tag_name }}"
+  register: _ec2
+
+- name: Add all instance public IPs to host group
+  add_host: hostname={{ item.public_ip }} groups=tag_Name_{{ tag_name }} private_key_file=~/.ssh/{{ key_pair_name }}.pem
+  with_items: _ec2.instances
+
+- name: Wait for the instances to boot by checking the ssh port
+  wait_for: host={{ item.public_ip }} port=22 delay=60 timeout=320 state=started
+  with_items: _ec2.instances
+
+- name: Add private IP to route53 (DNS)
+  route53:
+      command: create
+      zone: "{{ _route53.set.name }}"
+      record: "{{ tag_name }}.{{ _route53.set.name }}"
+      private_zone: "{{ _route53.set.private_zone }}"
+      hosted_zone_id: "{{ _route53.set.zone_id }}"
+      overwrite: True
+      type: A
+      value: "{{ item.public_ip }}"
+      ttl: 60
+  with_items: _ec2.instances
+
+- name: Create EC2 key pair
+  ec2_key:
+    name: "{{ key_pair_name }}"
+    region: "{{ region }}"
+  register: _ec2_key
+
+- name: Save EC2 key pair (if created)
+  local_action: copy content="{{ _ec2_key.key.private_key }}" dest="~/.ssh/{{ _ec2_key.key.name }}" mode=0600
+  when: _ec2_key.changed
+
+- name: Create EC2 security group
+  ec2_group:
+    name: "{{ security_group }}"
+    description: Auto security group
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ region }}"
+
+    rules:
+    - proto: tcp
+      from_port: 22
+      to_port: 22
+      cidr_ip: 0.0.0.0/0
+
+    rules_egress:
+    - proto: all
+      from_port: all
+      to_port: all
+      cidr_ip: 0.0.0.0/0
+
+- name: Create iam role
+  iam:
+    iam_type: role
+    name: "{{ iam_role }}"
+    state: present
+
+- name: Create policy
+  iam_policy:
+    iam_type: role
+    iam_name: "{{ iam_role }}"
+    policy_name: "{{ iam_policy }}"
+    policy_document: "{{ policy_document }}"
+    state: present
+
+- name: Wait 15 seconds for iam policy to be propagated
+  pause: seconds=15
