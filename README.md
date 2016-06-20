@@ -29,25 +29,25 @@ Create a virtual server in AWS.
 
 ## Example Playbook
 
-- hosts: localhost
-  connection: local
-  gather_facts: False
-
-  vars:
-
-    region: eu-west-1
-    vpc_id: vpc-3ca45d58
-    vpc_subnet_id: subnet-0a81266e
-    dns_zone: reisingers.org
-
-    key_pair_name: ansible-frodo
-    security_group: web_sg
-
-    tag_name: frodo
-    instance_type: t2.small
-
-  roles:
-    - { role: ansible-role-awsserver }
+	- hosts: localhost
+	  connection: local
+	  gather_facts: False
+	
+	  vars:
+	
+	    region: eu-west-1
+	    vpc_id: vpc-3ca45d58
+	    vpc_subnet_id: subnet-0a81266e
+	    dns_zone: reisingers.org
+	
+	    key_pair_name: ansible-frodo
+	    security_group: web_sg
+	
+	    tag_name: frodo
+	    instance_type: t2.small
+	
+	  roles:
+	    - { role: ansible-role-awsserver }
 
 ## Connect
 
