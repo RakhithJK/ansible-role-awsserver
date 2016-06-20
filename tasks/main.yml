@@ -95,7 +95,7 @@
     iam_type: role
     iam_name: "{{ iam_role }}"
     policy_name: "{{ iam_policy }}"
-    policy_document: "files/policies/Web.json"
+    policy_document: web_policy.json
     state: present
 
 - name: Wait 15 seconds for iam policy to be propagated
