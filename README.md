@@ -1,4 +1,4 @@
-## awsserver
+## ansible-role-awsserver
 
 Create a virtual server in AWS.
 
