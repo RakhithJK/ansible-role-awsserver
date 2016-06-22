@@ -1,9 +1,3 @@
-- name: Create route53 DNS zone
-  route53_zone:
-      state: present
-      zone: "{{ domain }}"
-  register: _route53
-
 - name: Find image
   ec2_ami_find:
     #name: "*/ubuntu-trusty-14.04-amd64-server-*"
@@ -15,6 +9,16 @@
     sort_order: descending
     sort_end: 1
   register: _ami
+
+- name: Create EC2 key pair
+  ec2_key:
+    name: "{{ host }}"
+    region: "{{ region }}"
+  register: _ec2_key
+
+- name: Save EC2 key pair (if created)
+  local_action: copy content="{{ _ec2_key.key.private_key }}" dest="~/.ssh/{{ _ec2_key.key.name }}" mode=0600
+  when: _ec2_key.changed
 
 - name: Provision EC2 instance
   ec2:
@@ -41,6 +45,12 @@
   wait_for: host={{ item.public_ip }} port=22 delay=60 timeout=320 state=started
   with_items: _ec2.instances
 
+- name: Create route53 DNS zone
+  route53_zone:
+      state: present
+      zone: "{{ domain }}"
+  register: _route53
+
 - name: Add private IP to route53 (DNS)
   route53:
       command: create
@@ -53,16 +63,6 @@
       value: "{{ item.public_ip }}"
       ttl: 60
   with_items: _ec2.instances
-
-- name: Create EC2 key pair
-  ec2_key:
-    name: "{{ host }}"
-    region: "{{ region }}"
-  register: _ec2_key
-
-- name: Save EC2 key pair (if created)
-  local_action: copy content="{{ _ec2_key.key.private_key }}" dest="~/.ssh/{{ _ec2_key.key.name }}" mode=0600
-  when: _ec2_key.changed
 
   #- name: Create EC2 security group
   #  ec2_group:
