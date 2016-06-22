@@ -8,7 +8,7 @@
   ec2_ami_find:
     name: "*/ubuntu-trusty-14.04-amd64-server-*"
     region: "{{ region }}"
-    virtualization_type: hvm
+    #virtualization_type: hvm
     sort: name
     sort_order: descending
     sort_end: 1
