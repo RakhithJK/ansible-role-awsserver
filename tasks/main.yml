@@ -21,7 +21,7 @@
     region: "{{ region }}"
     instance_type: "{{ instance_type }}"
     #vpc_subnet_id: "{{ vpc_subnet_id }}"
-    assign_public_ip: yes
+    #assign_public_ip: yes
     image: "{{ _ami.results[0].ami_id }}"
     wait: True
     exact_count: 1
