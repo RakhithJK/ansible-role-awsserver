@@ -16,7 +16,7 @@
 
 - name: Provision EC2 instance
   ec2:
-    keypair: "{{ key_pair_name }}"
+    keypair: "{{ host }}"
     #group: "{{ security_group }}"
     region: "{{ region }}"
     instance_type: "{{ instance_type }}"
