@@ -1,16 +1,14 @@
-- name: Find image
+- name: Find OS image (AMI)
   ec2_ami_find:
-    #name: "*/ubuntu-trusty-14.04-amd64-server-*"
     name: "ubuntu/images/ebs/ubuntu-trusty-14.04-amd64-server-*"
     architecture: x86_64
     region: "{{ region }}"
-    #virtualization_type: hvm
     sort: name
     sort_order: descending
     sort_end: 1
   register: _ami
 
-- name: Create EC2 key pair
+- name: Create SSH keys (EC2 key pair)
   ec2_key:
     name: "{{ host }}"
     region: "{{ region }}"
@@ -20,14 +18,11 @@
   local_action: copy content="{{ _ec2_key.key.private_key }}" dest="~/.ssh/{{ _ec2_key.key.name }}" mode=0600
   when: _ec2_key.changed
 
-- name: Provision EC2 instance
+- name: Provision VM (EC2 instance)
   ec2:
     keypair: "{{ host }}"
-    #group: "{{ security_group }}"
     region: "{{ region }}"
     instance_type: "{{ instance_type }}"
-    #vpc_subnet_id: "{{ vpc_subnet_id }}"
-    #assign_public_ip: yes
     image: "{{ _ami.results[0].ami_id }}"
     wait: True
     exact_count: 1
@@ -45,13 +40,13 @@
   wait_for: host={{ item.public_ip }} port=22 delay=60 timeout=320 state=started
   with_items: _ec2.instances
 
-- name: Create route53 DNS zone
+- name: Create DNS (route 53) zone
   route53_zone:
       state: present
       zone: "{{ domain }}"
   register: _route53
 
-- name: Add private IP to route53 (DNS)
+- name: Add private IP to route 53
   route53:
       command: create
       zone: "{{ _route53.set.name }}"
@@ -63,23 +58,3 @@
       value: "{{ item.public_ip }}"
       ttl: 60
   with_items: _ec2.instances
-
-  #- name: Create EC2 security group
-  #  ec2_group:
-  #    name: "{{ security_group }}"
-  #    description: Auto security group
-  #    #vpc_id: "{{ vpc_id }}"
-  #    region: "{{ region }}"
-  #
-  #    rules:
-  #    - proto: tcp
-  #      from_port: 22
-  #      to_port: 22
-  #      cidr_ip: 0.0.0.0/0
-  #
-  #    rules_egress:
-  #    - proto: all
-  #      from_port: all
-  #      to_port: all
-  #      cidr_ip: 0.0.0.0/0
-
