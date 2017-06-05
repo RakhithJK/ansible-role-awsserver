@@ -4,7 +4,7 @@ Create a virtual server in AWS.
 
 ## Requirements
 
-0) To install this role:
+To install this role:
 
     cat requirements.yml
 	- src: https://github.com/jreisinger/ansible-role-awsserver
@@ -17,15 +17,14 @@ Create a virtual server in AWS.
 	[defaults]
 	roles_path = ~/ansible-roles
 
-1) Remove keypair from AWS and private key from ~/.ssh
+Remove keypair from AWS and private key from ~/.ssh
 
-2) Set environment variables
+Set environment variables
 
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-3) Install `boto`.
-
+Install `boto`.
 
 ## Example Playbook
 
